@@ -1,6 +1,6 @@
-import type { AppData, Course } from '../types'
+import type { AppData, Course, Slot } from '../types'
 import { COURSE_COLORS, DEFAULT_COLOR } from './colors'
-import { isValidISO } from './date'
+import { isTime, isValidISO } from './date'
 
 export const STORAGE_KEY = 'devamtakip:v1'
 export const MAX_NAME = 60
@@ -38,14 +38,27 @@ export function sanitize(raw: unknown): AppData | null {
     const absences = Array.isArray(c.absences)
       ? [...new Set(c.absences.filter(isValidISO))].sort()
       : []
-    const days = Array.isArray(c.days)
-      ? [...new Set(c.days.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
-      : []
+    // Eski sürümde ders günleri `days` listesiydi; saatsiz slota çevrilir
+    const rawSlots: unknown[] = Array.isArray(c.slots)
+      ? c.slots
+      : Array.isArray(c.days)
+        ? c.days.map((day) => ({ day }))
+        : []
+    const slots: Slot[] = []
+    for (const r of rawSlots.slice(0, 21)) {
+      const o = r as Record<string, unknown> | null
+      if (!o || typeof o !== 'object') continue
+      const day = o.day
+      if (typeof day !== 'number' || !Number.isInteger(day) || day < 0 || day > 6) continue
+      const start = isTime(o.start) ? o.start : ''
+      const end = start && isTime(o.end) && o.end > start ? o.end : ''
+      if (!slots.some((x) => x.day === day && x.start === start)) slots.push({ day, start, end })
+    }
     const notes: Record<string, string> = {}
     if (c.notes && typeof c.notes === 'object')
       for (const [k, v] of Object.entries(c.notes as Record<string, unknown>))
         if (absences.includes(k) && typeof v === 'string' && v.trim()) notes[k] = v.trim().slice(0, MAX_NOTE)
-    courses.push({ id, name, limit, color, days, absences, notes })
+    courses.push({ id, name, limit, color, slots, absences, notes })
   }
   return { version: 1, courses }
 }

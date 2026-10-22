@@ -6,7 +6,7 @@ export default {
       colors: {
         ink: '#0F1B2D',
         mist: '#EEF2F7',
-        brand: { DEFAULT: '#2F5BFF', dark: '#2146D6' },
+        brand: { DEFAULT: '#1F3C88', dark: '#162C66' },
         ok: '#16875F',
         warn: '#A8650A',
         bad: '#C93C3C',

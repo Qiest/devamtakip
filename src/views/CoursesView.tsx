@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { AppData, Course } from '../types'
 import type { Actions } from '../hooks/useData'
-import { daysSummary } from '../lib/date'
+import { slotsSummary } from '../lib/date'
 import { CourseForm } from '../components/CourseForm'
 import { ConfirmDialog } from '../components/Modal'
 import { EditIcon, PlusIcon, TrashIcon } from '../components/icons'
@@ -24,7 +24,7 @@ export function CoursesView({ data, actions }: { data: AppData; actions: Actions
           <li key={c.id} className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-white p-4" style={{ borderLeft: `6px solid ${c.color}` }}>
             <div className="min-w-0 flex-1">
               <h3 className="truncate font-bold">{c.name}</h3>
-              <p className="text-sm text-ink/60">{daysSummary(c.days)}</p>
+              <p className="text-sm text-ink/60">{slotsSummary(c.slots)}</p>
               <p className="text-sm text-ink/60">{c.limit ? `Limit: ${c.limit}` : 'Limit yok'}, {c.absences.length} devamsızlık</p>
             </div>
             <button onClick={() => setForm({ course: c })} aria-label={`${c.name} dersini düzenle`} className="grid h-11 w-11 place-items-center rounded-full hover:bg-mist"><EditIcon /></button>
@@ -35,7 +35,7 @@ export function CoursesView({ data, actions }: { data: AppData; actions: Actions
 
       {form && (
         <CourseForm initial={form.course} existingNames={names(form.course?.id)} onClose={() => setForm(null)}
-          onSubmit={(n, l, col, d) => form.course ? actions.updateCourse(form.course.id, { name: n, limit: l, color: col, days: d }) : actions.addCourse(n, l, col, d)} />
+          onSubmit={(n, l, col, sl) => form.course ? actions.updateCourse(form.course.id, { name: n, limit: l, color: col, slots: sl }) : actions.addCourse(n, l, col, sl)} />
       )}
       {removing && (
         <ConfirmDialog danger title="Dersi sil" confirmLabel="Sil" onClose={() => setRemoving(null)} onConfirm={() => actions.deleteCourse(removing.id)}

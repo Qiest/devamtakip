@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AppData, Course } from '../types'
 import type { Actions } from '../hooks/useData'
-import { addDays, dowOf, formatTR, isValidISO, todayISO, weekdayTR } from '../lib/date'
+import { addDays, dowOf, formatTR, isValidISO, slotsOn, timeLabel, todayISO, weekdayTR } from '../lib/date'
 import { MAX_NOTE } from '../lib/storage'
 import { courseStats, toneClass } from '../lib/stats'
 import { Ring } from '../components/Ring'
@@ -24,7 +24,12 @@ export function TrackView({ data, actions, notify, goCourses }: Props) {
     )
 
   const dow = valid ? dowOf(date) : -1
-  const list = valid ? data.courses.filter((c) => !c.days.length || c.days.includes(dow) || c.absences.includes(date)) : []
+  const firstStart = (c: Course) => slotsOn(c.slots, dow)[0]?.start || '99:99'
+  const list = valid
+    ? data.courses
+        .filter((c) => !c.slots.length || c.slots.some((s) => s.day === dow) || c.absences.includes(date))
+        .sort((a, b) => firstStart(a).localeCompare(firstStart(b)))
+    : []
   const step = 'grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/15 text-2xl font-bold disabled:opacity-40'
 
   return (
@@ -62,7 +67,9 @@ function CourseRow({ course: c, date, actions, notify }: { course: Course; date:
   const saved = c.notes[date] ?? ''
   const [note, setNote] = useState(saved)
   useEffect(() => setNote(saved), [saved, date])
-  const offSchedule = c.days.length > 0 && !c.days.includes(dowOf(date))
+  const todays = slotsOn(c.slots, dowOf(date))
+  const times = todays.map(timeLabel).filter(Boolean).join(', ')
+  const offSchedule = c.slots.length > 0 && todays.length === 0
 
   function add() {
     if (actions.addAbsence(c.id, date) === 'added')
@@ -82,6 +89,7 @@ function CourseRow({ course: c, date, actions, notify }: { course: Course; date:
           <p className={`text-sm font-medium ${toneClass[s.tone]}`}>
             {c.limit ? `${s.count} / ${c.limit} devamsızlık, ${s.text}` : `${s.count} devamsızlık`}
           </p>
+          {times && <p className="text-sm font-semibold text-ink/70">{times}</p>}
           {offSchedule && <p className="text-sm text-ink/55">Bu gün programda yok</p>}
         </div>
       </div>

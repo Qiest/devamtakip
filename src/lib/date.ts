@@ -1,3 +1,5 @@
+import type { Slot } from '../types'
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Yerel saate göre YYYY-MM-DD (toISOString UTC kayması yaratır, kullanılmaz). */
@@ -47,6 +49,23 @@ export function addDays(iso: string, n: number): string {
   return toISO(new Date(y, m - 1, d + n))
 }
 
-export function daysSummary(days: number[]): string {
-  return days.length ? DAYS.filter((d) => days.includes(d.id)).map((d) => d.short).join(', ') : 'Her gün'
+export const isTime = (s: unknown): s is string => typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s)
+
+export function timeLabel(s: Slot): string {
+  return s.start && s.end ? `${s.start}–${s.end}` : s.start
+}
+
+/** O güne ait saatler, erken olandan başlayarak. */
+export function slotsOn(slots: Slot[], dow: number): Slot[] {
+  return slots.filter((s) => s.day === dow).sort((a, b) => a.start.localeCompare(b.start))
+}
+
+/** Örn. "Per 09:00–10:30, Çar 13:00" */
+export function slotsSummary(slots: Slot[]): string {
+  if (!slots.length) return 'Her gün'
+  const order = DAYS.map((d) => d.id)
+  return [...slots]
+    .sort((a, b) => order.indexOf(a.day) - order.indexOf(b.day) || a.start.localeCompare(b.start))
+    .map((s) => `${DAYS.find((d) => d.id === s.day)?.short} ${timeLabel(s)}`.trim())
+    .join(', ')
 }

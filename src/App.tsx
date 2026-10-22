@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react'
 import { useData } from './hooks/useData'
 import { isConfigured } from './lib/firebase'
+import { getSavedProfile, saveProfile, type Profile } from './lib/profiles'
 import { TrackView, type Notify } from './views/TrackView'
 import { CoursesView } from './views/CoursesView'
 import { HistoryView } from './views/HistoryView'
+import { ProfileView } from './views/ProfileView'
 import { BookIcon, CheckIcon, ClockIcon, Logo } from './components/icons'
 
 type Tab = 'track' | 'courses' | 'history'
@@ -14,6 +16,7 @@ const TABS: { id: Tab; label: string; Icon: ComponentType }[] = [
 ]
 
 export default function App() {
+  const [profile, setProfile] = useState<Profile | null>(getSavedProfile)
   if (!isConfigured)
     return (
       <div className="mx-auto max-w-md p-6">
@@ -21,11 +24,12 @@ export default function App() {
         <p className="mt-2 text-ink/70">Proje klasöründeki <code>.env</code> dosyasına Firebase bilgilerini yaz (README'de adımlar var), sonra yeniden derle.</p>
       </div>
     )
-  return <Main />
+  if (!profile) return <ProfileView onPick={(p) => { saveProfile(p.id); setProfile(p) }} />
+  return <Main key={profile.id} profile={profile} onSwitch={() => { saveProfile(null); setProfile(null) }} />
 }
 
-function Main() {
-  const { data, loading, saveError, actions } = useData()
+function Main({ profile, onSwitch }: { profile: Profile; onSwitch: () => void }) {
+  const { data, loading, saveError, actions } = useData(profile.docId)
   const [tab, setTab] = useState<Tab>('track')
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
   const timer = useRef<number | undefined>(undefined)
@@ -39,16 +43,20 @@ function Main() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-2xl">
-      <header className="pt-safe sticky top-0 z-20 border-b border-ink/10 bg-mist/95 backdrop-blur">
+      <header className="pt-safe sticky top-0 z-20 bg-brand text-white">
         <div className="flex h-16 items-center gap-3 px-4">
           <Logo />
-          <h1 className="text-xl font-extrabold tracking-tight">DevamTakip</h1>
+          <div className="min-w-0 leading-tight">
+            <h1 className="text-lg font-extrabold tracking-tight">DevamTakip</h1>
+            <p className="truncate text-xs text-white/75">{profile.name}</p>
+          </div>
           <nav className="ml-auto hidden gap-1 md:flex" aria-label="Ana menü">
             {TABS.map(({ id, label }) => (
               <button key={id} onClick={() => setTab(id)} aria-current={tab === id ? 'page' : undefined}
-                className={`h-10 rounded-full px-4 font-semibold ${tab === id ? 'bg-ink text-white' : 'hover:bg-white'}`}>{label}</button>
+                className={`h-10 rounded-full px-4 font-semibold ${tab === id ? 'bg-white text-brand' : 'text-white/85 hover:bg-white/15'}`}>{label}</button>
             ))}
           </nav>
+          <button onClick={onSwitch} className="ml-auto h-10 shrink-0 rounded-full px-3 text-sm font-semibold text-white/85 hover:bg-white/15 md:ml-1">Hesap değiştir</button>
         </div>
       </header>
 

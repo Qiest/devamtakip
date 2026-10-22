@@ -1,0 +1,9 @@
+rules_version = "2";
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Sadece iki kişinin tek veri kaydına izin verilir; liste çekme ve silme kapalı.
+    match /devamtakip/{docId} {
+      allow get, create, update: if docId in ["d-IMxVwXdnzd7EtXOJIxC1vsb3", "d-w5pHUVGADkCtGpfKK4FoeNFE"];
+    }
+  }
+}

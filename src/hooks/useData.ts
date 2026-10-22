@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
-import type { AppData, Course } from '../types'
-import { MAX_NOTE, STORAGE_KEY, emptyData, loadData, newId, sanitize } from '../lib/storage'
+import type { AppData, Course, Slot } from '../types'
+import { MAX_NOTE, emptyData, newId, sanitize } from '../lib/storage'
 import { isValidISO } from '../lib/date'
-import { DATA_DOC_ID, db } from '../lib/firebase'
+import { db } from '../lib/firebase'
 
 export type AddResult = 'added' | 'duplicate' | 'invalid' | 'missing'
 
-export function useData() {
+export function useData(docId: string) {
   const [data, setData] = useState<AppData>(emptyData)
   const [loading, setLoading] = useState(true)
   const [saveError, setSaveError] = useState(false)
   const ref = useRef(data)
-  const docRef = useMemo(() => doc(db!, 'devamtakip', DATA_DOC_ID), [])
+  const docRef = useMemo(() => doc(db!, 'devamtakip', docId), [docId])
 
   const apply = useCallback((next: AppData) => {
     ref.current = next
@@ -34,13 +34,6 @@ export function useData() {
         if (snap.exists()) {
           // Kendi yazdığımız değişikliklerin yankısını yok say (zaten uygulandı)
           if (isFirst || !snap.metadata.hasPendingWrites) apply(sanitize(snap.data()) ?? emptyData())
-        } else if (!snap.metadata.fromCache) {
-          // Bulutta kayıt yok: eski yerel veri varsa bir kereye mahsus taşı
-          const local = loadData()
-          if (local.courses.length) {
-            apply(local)
-            setDoc(docRef, local).then(() => localStorage.removeItem(STORAGE_KEY)).catch(() => setSaveError(true))
-          } else apply(emptyData())
         }
         setLoading(false)
       },
@@ -53,11 +46,11 @@ export function useData() {
       commit({ ...ref.current, courses: ref.current.courses.map((c) => (c.id === id ? fn(c) : c)) })
 
     return {
-      addCourse(name: string, limit: number | null, color: string, days: number[]) {
-        const course: Course = { id: newId(), name, limit, color, days, absences: [], notes: {} }
+      addCourse(name: string, limit: number | null, color: string, slots: Slot[]) {
+        const course: Course = { id: newId(), name, limit, color, slots, absences: [], notes: {} }
         commit({ ...ref.current, courses: [...ref.current.courses, course] })
       },
-      updateCourse(id: string, patch: Pick<Course, 'name' | 'limit' | 'color' | 'days'>) {
+      updateCourse(id: string, patch: Pick<Course, 'name' | 'limit' | 'color' | 'slots'>) {
         mapCourse(id, (c) => ({ ...c, ...patch }))
       },
       deleteCourse(id: string) {

@@ -9,6 +9,16 @@
   button { touch-action: manipulation; }
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url('/bg-logo.png') center 45% / min(88vw, 600px) no-repeat;
+  opacity: 0.09;
+  pointer-events: none;
+}
+
 @layer utilities {
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
