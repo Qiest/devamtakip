@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "devamtakip": {
+      "$id": {
+        ".read": "$id === 'd-w5pHUVGADkCtGpfKK4FoeNFE'",
+        ".write": "$id === 'd-w5pHUVGADkCtGpfKK4FoeNFE'"
+      }
+    }
+  }
+}
