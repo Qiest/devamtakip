@@ -3,10 +3,9 @@ import { getDatabase } from 'firebase/database'
 
 const env = import.meta.env
 const config = {
-  apiKey: env.VITE_FIREBASE_API_KEY,
-  projectId: env.VITE_FIREBASE_PROJECT_ID,
-  appId: env.VITE_FIREBASE_APP_ID,
-  databaseURL: env.VITE_FIREBASE_DATABASE_URL,
+  apiKey: env.VITE_FIREBASE_API_KEY || 'AIzaSyCZic3hylaJrDdPzzfBigJfK0bRy3484gg',
+  projectId: env.VITE_FIREBASE_PROJECT_ID || 'yoklamaaa',
+  appId: env.VITE_FIREBASE_APP_ID || '1:507638842448:web:22bef6980e7fd5bec9fd55',
 }
 
 export const isConfigured = Object.values(config).every(Boolean)
