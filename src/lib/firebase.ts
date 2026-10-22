@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getDatabase } from 'firebase/database'
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
 const env = import.meta.env
 const config = {
@@ -10,7 +10,9 @@ const config = {
 
 export const isConfigured = Object.values(config).every(Boolean)
 const app = isConfigured ? initializeApp(config) : null
-export const db = app ? getDatabase(app) : null
 
-/** Tüm verinin durduğu tek kayıt. database.rules.json içindeki ile aynı olmalı. */
+export const db = app
+  ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })
+  : null
+
 export const DATA_DOC_ID = 'd-w5pHUVGADkCtGpfKK4FoeNFE'

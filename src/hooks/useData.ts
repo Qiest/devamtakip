@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { onValue, ref as dbRef, set } from 'firebase/database'
+import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import type { AppData, Course } from '../types'
 import { STORAGE_KEY, emptyData, loadData, newId, sanitize } from '../lib/storage'
 import { isValidISO } from '../lib/date'
@@ -7,55 +7,44 @@ import { DATA_DOC_ID, db } from '../lib/firebase'
 
 export type AddResult = 'added' | 'duplicate' | 'invalid' | 'missing'
 
-// İnternet yokken uygulama açılırsa son bilinen veriyi göstermek için yerel kopya
-const CACHE_KEY = 'devamtakip:cache'
-function loadCache(): AppData | null {
-  try {
-    const t = localStorage.getItem(CACHE_KEY)
-    return t ? sanitize(JSON.parse(t)) : null
-  } catch { return null }
-}
-function saveCache(d: AppData) {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)) } catch { /* dolu olabilir */ }
-}
-
 export function useData() {
-  const [cached] = useState(loadCache)
-  const [data, setData] = useState<AppData>(cached ?? emptyData)
-  const [loading, setLoading] = useState(!cached)
+  const [data, setData] = useState<AppData>(emptyData)
+  const [loading, setLoading] = useState(true)
   const [saveError, setSaveError] = useState(false)
   const ref = useRef(data)
-  const node = useMemo(() => dbRef(db!, `devamtakip/${DATA_DOC_ID}`), [])
+  const docRef = useMemo(() => doc(db!, 'devamtakip', DATA_DOC_ID), [])
 
   const apply = useCallback((next: AppData) => {
     ref.current = next
     setData(next)
-    saveCache(next)
   }, [])
 
   const commit = useCallback((next: AppData) => {
     apply(next)
-    set(node, next).then(() => setSaveError(false)).catch(() => setSaveError(true))
-  }, [apply, node])
+    setDoc(docRef, next).then(() => setSaveError(false)).catch(() => setSaveError(true))
+  }, [apply, docRef])
 
   useEffect(() => {
-    return onValue(
-      node,
+    let first = true
+    return onSnapshot(
+      docRef,
       (snap) => {
-        if (snap.exists()) apply(sanitize(snap.val()) ?? emptyData())
-        else {
-          // Bulutta kayıt yok: eski yerel veri varsa bir kereye mahsus taşı
+        const isFirst = first
+        first = false
+        if (snap.exists()) {
+          if (isFirst || !snap.metadata.hasPendingWrites) apply(sanitize(snap.data()) ?? emptyData())
+        } else if (!snap.metadata.fromCache) {
           const local = loadData()
           if (local.courses.length) {
             apply(local)
-            set(node, local).then(() => localStorage.removeItem(STORAGE_KEY)).catch(() => setSaveError(true))
+            setDoc(docRef, local).then(() => localStorage.removeItem(STORAGE_KEY)).catch(() => setSaveError(true))
           } else apply(emptyData())
         }
         setLoading(false)
       },
       () => { setSaveError(true); setLoading(false) },
     )
-  }, [node, apply])
+  }, [docRef, apply])
 
   const actions = useMemo(() => {
     const mapCourse = (id: string, fn: (c: Course) => Course) =>
