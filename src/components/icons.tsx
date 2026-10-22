@@ -6,6 +6,7 @@ const Svg = ({ children, size = 22 }: { children: ReactNode; size?: number }) =>
   </svg>
 )
 export const CheckIcon = () => <Svg><rect x="3.5" y="5" width="17" height="15.5" rx="3" /><path d="M8 3v4M16 3v4M8.5 13l2.5 2.5 4.5-5" /></Svg>
+export const ClockIcon = () => <Svg><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Svg>
 export const BookIcon = () => <Svg><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v16H6.5A1.5 1.5 0 0 0 5 20.5v-16ZM5 20.5A1.5 1.5 0 0 0 6.5 22H19" /></Svg>
 export const SaveIcon = () => <Svg><path d="M12 3v12M7 10l5 5 5-5M4 20h16" /></Svg>
 export const PlusIcon = () => <Svg size={20}><path d="M12 5v14M5 12h14" /></Svg>

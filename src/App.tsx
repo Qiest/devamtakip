@@ -3,12 +3,14 @@ import { useData } from './hooks/useData'
 import { isConfigured } from './lib/firebase'
 import { TrackView, type Notify } from './views/TrackView'
 import { CoursesView } from './views/CoursesView'
-import { BookIcon, CheckIcon, Logo } from './components/icons'
+import { HistoryView } from './views/HistoryView'
+import { BookIcon, CheckIcon, ClockIcon, Logo } from './components/icons'
 
-type Tab = 'track' | 'courses'
+type Tab = 'track' | 'courses' | 'history'
 const TABS: { id: Tab; label: string; Icon: ComponentType }[] = [
   { id: 'track', label: 'Takip', Icon: CheckIcon },
   { id: 'courses', label: 'Dersler', Icon: BookIcon },
+  { id: 'history', label: 'Geçmiş', Icon: ClockIcon },
 ]
 
 export default function App() {
@@ -60,6 +62,7 @@ function Main() {
         {loading ? <p className="py-10 text-center text-ink/60">Yükleniyor…</p> : <>
         {tab === 'track' && <TrackView data={data} actions={actions} notify={notify} goCourses={() => setTab('courses')} />}
         {tab === 'courses' && <CoursesView data={data} actions={actions} />}
+        {tab === 'history' && <HistoryView data={data} actions={actions} notify={notify} />}
         </>}
       </main>
 
@@ -73,7 +76,7 @@ function Main() {
       )}
 
       <nav aria-label="Ana menü" className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-ink/10 bg-white md:hidden">
-        <div className="mx-auto grid max-w-2xl grid-cols-2">
+        <div className="mx-auto grid max-w-2xl grid-cols-3">
           {TABS.map(({ id, label, Icon }) => (
             <button key={id} onClick={() => setTab(id)} aria-current={tab === id ? 'page' : undefined}
               className={`flex h-16 flex-col items-center justify-center gap-0.5 text-xs font-semibold ${tab === id ? 'text-brand' : 'text-ink/55'}`}>

@@ -5,6 +5,7 @@ import { isValidISO } from './date'
 export const STORAGE_KEY = 'devamtakip:v1'
 export const MAX_NAME = 60
 export const MAX_LIMIT = 365
+export const MAX_NOTE = 200
 
 export function newId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
@@ -37,7 +38,14 @@ export function sanitize(raw: unknown): AppData | null {
     const absences = Array.isArray(c.absences)
       ? [...new Set(c.absences.filter(isValidISO))].sort()
       : []
-    courses.push({ id, name, limit, color, absences })
+    const days = Array.isArray(c.days)
+      ? [...new Set(c.days.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
+      : []
+    const notes: Record<string, string> = {}
+    if (c.notes && typeof c.notes === 'object')
+      for (const [k, v] of Object.entries(c.notes as Record<string, unknown>))
+        if (absences.includes(k) && typeof v === 'string' && v.trim()) notes[k] = v.trim().slice(0, MAX_NOTE)
+    courses.push({ id, name, limit, color, days, absences, notes })
   }
   return { version: 1, courses }
 }
