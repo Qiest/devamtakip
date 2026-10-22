@@ -11,8 +11,10 @@ const config = {
 export const isConfigured = Object.values(config).every(Boolean)
 const app = isConfigured ? initializeApp(config) : null
 
+// Çevrimdışıyken de çalışsın diye yerel önbellek açık
 export const db = app
   ? initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })
   : null
 
+/** Tüm verinin durduğu tek kayıt. firestore.rules içindeki ile aynı olmalı. */
 export const DATA_DOC_ID = 'd-w5pHUVGADkCtGpfKK4FoeNFE'
